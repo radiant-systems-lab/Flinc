@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import os
-import re
 import signal
 import subprocess
 import sys
@@ -8,89 +7,108 @@ import sys
 import psutil
 
 
-def _signal_children(sig):
-    print("Inside signal handler", file=sys.__stderr__)
+def proc_exe(proc):
+    try:
+        return proc.exe()
+    except (psutil.Error, FileNotFoundError):
+        return '<exited>'
+
+
+def terminate_children(sig=signal.SIGKILL):
+    print("Inside signal handler")
     parent = psutil.Process(os.getpid())
-    print("parent:", parent.exe(), file=sys.__stderr__)
+    print("parent:", proc_exe(parent))
     for child in parent.children(recursive=True):
-        print("child:", child.exe(), file=sys.__stderr__)
-        child.send_signal(sig)
+        print("child:", proc_exe(child))
+        try:
+            child.send_signal(sig)
+        except psutil.Error:
+            pass
 
 
 def sigIntHandler(*_):
-    _signal_children(signal.SIGKILL)
+    terminate_children(signal.SIGKILL)
 
 
 def sigTermHandler(*_):
-    _signal_children(signal.SIGKILL)
+    terminate_children(signal.SIGKILL)
 
 
-def _active_project_dir():
-    activated = os.path.expanduser('~/sciunit/.activated')
-    try:
-        with open(activated, encoding='utf-8') as f:
-            project = f.readline().strip()
-    except OSError:
-        return None
-    return project or None
+def normalized_args():
+    args = sys.argv[1:]
+    this_script = os.path.abspath(__file__)
+    while args and os.path.abspath(args[0]) == this_script:
+        args = args[1:]
+    return args
 
 
-def _extract_locked_rev(output):
-    match = re.search(r"execution ['\"]([^'\"]+)['\"] is encrypted", output)
-    if match:
-        return match.group(1)
-    return None
+def repeat_unlock_error(args):
+    if len(args) < 5 or args[0] != 'sciunit' or args[1] != 'given':
+        return None, None
+    if args[3] != 'repeat':
+        return None, None
+
+    connection_file = args[2]
+    rev = args[4]
+
+    import sciunit2.security
+    import sciunit2.workspace
+    from sciunit2.command.context import CheckoutContext
+
+    project_root = sciunit2.workspace.at()
+    if rev == 'latest':
+        emgr, _ = sciunit2.workspace.current()
+        with emgr.exclusive():
+            rev, _ = emgr.last()
+
+    if sciunit2.security.cached_shared_key(project_root, rev):
+        return None, connection_file
+
+    with CheckoutContext(rev) as (pkgdir, _orig):
+        if not sciunit2.security.package_requires_unlock(pkgdir):
+            return None, connection_file
+        shared_key = sciunit2.security.cached_shared_key(project_root, rev)
+        if shared_key:
+            return None, connection_file
+
+    message = (
+        "sciunit: repeat: execution %r is encrypted and cannot be repeated yet.\n"
+        "Run this command in a terminal, then come back and restart the Sciunit Repeat Kernel:\n"
+        "  sciunit unlock %s --key <shared-key>"
+    ) % (rev, rev)
+    return message, connection_file
 
 
-def _write_locked_message(rev):
-    project = _active_project_dir()
-    unlock = f"sciunit unlock {rev} --key <shared-key>"
-    lines = [
-        "",
-        "Sciunit repeat cannot start because the selected execution is encrypted.",
-        "Protected files must be unlocked before the Repeat Kernel can replay this notebook.",
-        "",
-        "Run this in a terminal:",
-    ]
-    if project:
-        lines.append(f"  cd {project}")
-    lines.extend([
-        f"  {unlock}",
-        "",
-        "Then restart the Sciunit Repeat Kernel and run the notebook again.",
-        "See flinc.log for the full sciunit error output.",
-        "",
-    ])
-    sys.__stderr__.write("\n".join(lines))
-    sys.__stderr__.flush()
+def launch_error_kernel(connection_file, message, log):
+    env = os.environ.copy()
+    env['FLINC_REPEAT_ERROR'] = message
+    error_kernel = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                'error-kernel.py')
+    return subprocess.run([sys.executable, error_kernel, '-f', connection_file],
+                          stdout=log, stderr=log, env=env).returncode
 
 
 def main():
-    print("Repeat Kernel", file=sys.__stderr__)
+    log = open('flinc.log', 'a', buffering=1)
+    sys.stdout = log
+    sys.stderr = log
+    print("Repeat Kernel")
     signal.signal(signal.SIGINT, sigIntHandler)
     signal.signal(signal.SIGTERM, sigTermHandler)
+    args = normalized_args()
 
-    with open('flinc.log', 'a', encoding='utf-8') as log:
-        log.write("Repeat Kernel\n")
-        log.flush()
-        proc = subprocess.run(sys.argv[1:], stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE, text=True)
-        if proc.stdout:
-            log.write(proc.stdout)
-        if proc.stderr:
-            log.write(proc.stderr)
-        log.flush()
+    try:
+        error_message, connection_file = repeat_unlock_error(args)
+    except Exception as exc:
+        error_message = "sciunit: repeat: failed before the kernel started: %s" % exc
+        connection_file = args[2] if len(args) > 2 else None
 
-    if proc.returncode != 0:
-        output = (proc.stdout or '') + (proc.stderr or '')
-        rev = _extract_locked_rev(output)
-        if rev:
-            _write_locked_message(rev)
-        else:
-            sys.__stderr__.write(output)
-            sys.__stderr__.flush()
-        return proc.returncode
-    return 0
+    if error_message and connection_file:
+        print(error_message)
+        return launch_error_kernel(connection_file, error_message, log)
+
+    result = subprocess.run(args, stdout=log, stderr=log)
+    return result.returncode
 
 
 if __name__ == '__main__':

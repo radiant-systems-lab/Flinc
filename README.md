@@ -31,6 +31,10 @@ code. After execution completes, select 'No Kernel' from the list or shutdown th
 6. Repeat your notebook code on the same or different machine by selecting 
 the repeat kernel.
 7. After using the repeat kernel, select No Kernel again to finish.
+   If the selected execution is protected and has not been unlocked, the repeat
+   kernel will stay available and display the unlock error in the notebook. Run
+   the displayed `sciunit unlock <execution id> --key <shared-key>` command in a
+   terminal, then restart the repeat kernel.
 8. Sciunit will store your notebook as an executable which you can 
 view using:
 
@@ -45,9 +49,9 @@ view using:
    It will create a file named `e1-requirements.txt` in the notebook location to list all the dependencies.
 
 **NOTES**
-1. The install.sh script must only be executed once.
-   Once the audit and repeat kernels have been installed, the script 
-should not be run again.
+1. The install.sh script can be re-run to refresh the installed kernels. The
+repeat kernel installation is generated from a clean template so duplicate
+repeat-handler entries are not accumulated.
 2. No existing file should be deleted or modified in the Flinc directory.
 3. Run one notebook in a Sciunit project with the audit and repeat kernels. If you have multiple notebooks to audit, create separate Sciunit projects for each notebook.
 4. If you run your code using the audit kernel on machine #1, you can repeat it using the repeat kernel on machine #2. To do this, first execute your code using audit kernel, and then run 'sciunit copy' to obtain a unique code. Take that code and run `sciunit open <code>`. This transfers the contents of the notebook container to machine #2 from machine #1.

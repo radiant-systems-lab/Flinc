@@ -37,12 +37,27 @@ jupyter kernelspec install --user audit-kernel/
 echo "Installed the audit kernel"
 
 # step 6: update the repeat kernel
-repeatkernelpath="repeat-kernel/kernel.json"
-add="\\\t\"$(pwd)/repeat-handler.py\","
-sed -i "/argv\": \[/a $add" ${repeatkernelpath}
+repeatkerneltmp="$(mktemp -d)"
+mkdir -p "${repeatkerneltmp}/repeat-kernel"
+cp repeat-kernel/kernel.json "${repeatkerneltmp}/repeat-kernel/kernel.json"
+repeatkernelpath="${repeatkerneltmp}/repeat-kernel/kernel.json"
+repeat_handler="$(pwd)/repeat-handler.py"
+python - "${repeatkernelpath}" "${repeat_handler}" <<'PYJSON'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+handler = sys.argv[2]
+data = json.loads(path.read_text())
+argv = [arg for arg in data["argv"] if not arg.endswith("/repeat-handler.py")]
+data["argv"] = [handler] + argv
+path.write_text(json.dumps(data, indent=4) + "\n")
+PYJSON
 
 # step 7: install the repeat kernel
-jupyter kernelspec install --user repeat-kernel/
+jupyter kernelspec install --user "${repeatkerneltmp}/repeat-kernel/"
+rm -rf "${repeatkerneltmp}"
 echo "Installed the repeat kernel"
 
 # now just execute the notebook code with the audit and repeat kernels
