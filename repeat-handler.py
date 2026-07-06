@@ -107,7 +107,9 @@ def main():
         print(error_message)
         return launch_error_kernel(connection_file, error_message, log)
 
-    result = subprocess.run(args, stdout=log, stderr=log)
+    env = os.environ.copy()
+    env.setdefault('PYTHONSAFEPATH', '1')
+    result = subprocess.run(args, stdout=log, stderr=log, env=env)
     return result.returncode
 
 

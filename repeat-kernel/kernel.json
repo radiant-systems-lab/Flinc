@@ -5,6 +5,7 @@
         "{connection_file}",
         "repeat",
         "latest",
+        "-P",
         "-m",
         "ipykernel_launcher",
         "-f",
