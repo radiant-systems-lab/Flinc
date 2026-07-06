@@ -1,11 +1,15 @@
 {
     "argv": [
-      "sciunit", "given", "{connection_file}", "repeat", "e1",
-      "-m",
-      "ipykernel_launcher",
-      "-f",
-      "%"
-     ],
-     "display_name": "Sciunit Repeat Kernel",
-     "language": "python"
+        "sciunit",
+        "given",
+        "{connection_file}",
+        "repeat",
+        "latest",
+        "-m",
+        "ipykernel_launcher",
+        "-f",
+        "%"
+    ],
+    "display_name": "Sciunit Repeat Kernel",
+    "language": "python"
 }
