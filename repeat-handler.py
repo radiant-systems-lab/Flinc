@@ -39,7 +39,9 @@ def normalized_args():
     this_script = os.path.abspath(__file__)
     while args and os.path.abspath(args[0]) == this_script:
         args = args[1:]
-    return args
+    # Repeat kernels must preserve normal notebook import semantics so
+    # packaged modules next to the notebook remain importable.
+    return [arg for arg in args if arg != '-P']
 
 
 def repeat_unlock_error(args):
@@ -108,7 +110,6 @@ def main():
         return launch_error_kernel(connection_file, error_message, log)
 
     env = os.environ.copy()
-    env.setdefault('PYTHONSAFEPATH', '1')
     result = subprocess.run(args, stdout=log, stderr=log, env=env)
     return result.returncode
 
