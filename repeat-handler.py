@@ -63,14 +63,20 @@ def repeat_unlock_error(args):
         with emgr.exclusive():
             rev, _ = emgr.last()
 
-    if sciunit2.security.cached_shared_key(project_root, rev):
-        return None, connection_file
-
     with CheckoutContext(rev) as (pkgdir, _orig):
         if not sciunit2.security.package_requires_unlock(pkgdir):
             return None, connection_file
         shared_key = sciunit2.security.cached_shared_key(project_root, rev)
         if shared_key:
+            try:
+                sciunit2.security.validate_shared_key(pkgdir, shared_key)
+            except Exception:
+                message = (
+                    "sciunit: repeat: execution %r has an invalid cached unlock key.\n"
+                    "Run this command with the correct shared key, then restart the Sciunit Repeat Kernel:\n"
+                    "  sciunit unlock %s --key <shared-key>"
+                ) % (rev, rev)
+                return message, connection_file
             return None, connection_file
 
     message = (
