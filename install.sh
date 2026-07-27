@@ -36,12 +36,16 @@ sed -i -E "s/(\"display_name\": \")(.+)\",/\1Sciunit Audit(\2)\",/" ${auditkerne
 jupyter kernelspec install --user audit-kernel/
 echo "Installed the audit kernel"
 
-# step 6: update the repeat kernel
-repeatkernelpath="repeat-kernel/kernel.json"
-add="\\\t\"$(pwd)/repeat-handler.py\","
-sed -i "/argv\": \[/a $add" ${repeatkernelpath}
+# # step 6: update the repeat kernel
+# repeatkernelpath="repeat-kernel/kernel.json"
+# add="\\\t\"$(pwd)/repeat-handler.py\","
+# sed -i "/argv\": \[/a $add" ${repeatkernelpath}
 
-# step 7: install the repeat kernel
+# step 7: cp repeat handler to sciunit folder to be used in repeat kernel generation
+cp repeat-handler.py ~/sciunit/
+
+
+# step 8: install the repeat kernel
 jupyter kernelspec install --user repeat-kernel/
 echo "Installed the repeat kernel"
 

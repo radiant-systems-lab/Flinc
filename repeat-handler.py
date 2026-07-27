@@ -21,7 +21,6 @@ def sigTermHandler(*_):
         print("child:", child.exe())
         child.send_signal(signal.SIGKILL)
 
-
 print("Repeat Kernel")
 sys.stdout = open('flinc.log', 'a')
 sys.stderr = open('flinc.log', 'a')
