@@ -41,11 +41,11 @@ echo "Installed the audit kernel"
 # add="\\\t\"$(pwd)/repeat-handler.py\","
 # sed -i "/argv\": \[/a $add" ${repeatkernelpath}
 
-# step 6: cp repeat handler to sciunit folder to be used in repeat kernel generation
+# step 7: cp repeat handler to sciunit folder to be used in repeat kernel generation
 cp repeat-handler.py ~/sciunit/
 
 
-# step 7: install the repeat kernel
+# step 8: install the repeat kernel
 jupyter kernelspec install --user repeat-kernel/
 echo "Installed the repeat kernel"
 
