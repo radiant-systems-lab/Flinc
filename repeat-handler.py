@@ -27,8 +27,4 @@ sys.stdout = open('flinc.log', 'a')
 sys.stderr = open('flinc.log', 'a')
 signal.signal(signal.SIGINT, sigIntHandler)
 signal.signal(signal.SIGTERM, sigTermHandler)
-command = sys.argv[1:]
-if command and os.path.basename(command[0]) == 'sciunit':
-    wrapper = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'repeat-sciunit.py')
-    command = [sys.executable, wrapper, *command[1:]]
-sys.exit(subprocess.run(command).returncode)
+subprocess.run(sys.argv[1:])

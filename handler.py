@@ -33,6 +33,10 @@ sys.stdout = open('flinc.log', 'a')
 sys.stderr = open('flinc.log', 'a')
 signal.signal(signal.SIGINT, sigIntHandler)
 signal.signal(signal.SIGTERM, sigTermHandler)
-p = subprocess.Popen(sys.argv[1:], stdout=sys.stdout, stderr=sys.stderr, start_new_session=True)
+command = sys.argv[1:]
+if command[:2] == ['sciunit', 'exec']:
+    wrapper = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'audit-sciunit.py')
+    command = [sys.executable, wrapper, *command[1:]]
+p = subprocess.Popen(command, stdout=sys.stdout, stderr=sys.stderr, start_new_session=True)
 sciunit_pid = p.pid
-p.wait()
+sys.exit(p.wait())
