@@ -1,4 +1,8 @@
 # Prerequisites
+
+For the AWS distributed replay changes on `FLINC-NASA-DEMO_SEP_26`, see
+[the branch README](README.FLINC-NASA-DEMO_SEP_26.md).
+
 * Python 3.x with headers and compiler
 * pip >= 20.x
 * glibc>=2.17
