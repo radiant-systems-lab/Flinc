@@ -28,6 +28,10 @@ clean native build on other platforms has not been validated by this repair.
 
 ## Install into the Jupyter environment
 
+The Agent integration is on branch `FLINC-NASA-DEMO_SEP_26`. At this repair,
+the repository's default `main` branch does not contain `flinc-agent/`.
+Check the branch/commit in the clone used for installation.
+
 With the Jupyter server stopped, run from the cloned repository:
 
 ```bash
@@ -57,6 +61,49 @@ setup preserves it rather than overriding an administrator's explicit value.
 
 Restart Jupyter, reload the browser page, and create a fresh **flinc-agent** chat.
 A running Python server keeps previously imported tools until restart.
+
+## Browser commands time out on another server
+
+Installing the Python package with `pip` does **not** patch JupyterLab's
+prebuilt browser extension. Run setup in the Python environment and as the
+user that runs that Jupyter server. Running only `--check` never applies a fix.
+Reinstalling commands-toolkit can also restore its original browser assets.
+
+Toolkit 0.2.0 calls `crypto.randomUUID()` at module initialization. On a
+nonsecure remote HTTP origin it can be unavailable, preventing the whole
+extension from initializing. Even a command-list request then times out.
+The included browser patch uses `crypto.getRandomValues()` as a compatible
+fallback and generates new asset URLs to avoid the old immutable cache.
+
+For an existing installation, the browser can now be checked/repaired without
+reinstalling kernels, changing agent mode, or requiring the Sciunit/Codex commands:
+
+```bash
+# Run from the updated FLINC clone in the Jupyter server's Python environment.
+python -m pip install ./flinc-agent
+python -m flinc_agent.setup --browser-only --check
+python -m flinc_agent.setup --browser-only
+python -m flinc_agent.setup --browser-only --check
+```
+
+The check prints the Python executable, extension directory, and either
+`NEEDS REPAIR` or `CURRENT`. The latter means the files on disk match the patch;
+it is not proof that an already-open browser has loaded them or that its
+event connection is healthy. Supply `--toolkit-root /actual/extension/path`
+if Jupyter serves a different extension copy. Repair retains a backup.
+
+Restart that Jupyter server, reload the JupyterLab page, and start a fresh Flinc
+chat. Confirm that a command-list request responds before attempting a notebook
+run. If it still times out, inspect browser startup errors, extension loading,
+the event/WebSocket connection through the proxy, and chat/browser routing.
+A timeout alone does not establish that UUID generation is its cause.
+
+The secondary `KeyError: 'content'` comes from jupyter-ai-tools trying to read
+notebook content from a failed command response. `notebook_compat.py` adds a
+runtime guard when Flinc is loaded so the original bridge failure is reported
+instead. Valid live notebook content and the RTC read path are preserved; the
+guard does not substitute a potentially stale on-disk notebook. This improves
+diagnostics but does not repair a disconnected browser by itself.
 
 ## Configuration
 

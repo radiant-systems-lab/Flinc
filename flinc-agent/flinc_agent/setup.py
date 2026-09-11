@@ -14,7 +14,9 @@ from jupyter_client.kernelspec import KernelSpecManager
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--flinc-root', type=Path, required=True)
+    parser.add_argument('--flinc-root', type=Path)
+    parser.add_argument('--browser-only', action='store_true',
+                        help='Check or repair only the installed browser extension; no kernel/config changes')
     parser.add_argument('--kernel', default='python3')
     parser.add_argument('--toolkit-root', type=Path)
     parser.add_argument('--check', action='store_true', help='Check prerequisites without changing files')
@@ -23,37 +25,58 @@ def main():
     args = parser.parse_args()
     if sys.platform != 'linux':
         parser.error('FLINC Audit/Repeat currently requires Linux.')
-    root = args.flinc_root.expanduser().resolve()
-    for name in ['install_kernels.py', 'handler.py', 'repeat-handler.py', 'kernel_process.py', 'kernel_bootstrap.py']:
-        if not (root / name).is_file():
-            parser.error(f'Missing FLINC integration source: {root / name}')
-    for command in ['sciunit', 'codex-acp', 'codex']:
-        if not shutil.which(command):
-            parser.error(f'Required command is not installed: {command}')
+    if args.browser_only and args.initial_agent_mode:
+        parser.error('--initial-agent-mode cannot be used with --browser-only.')
+    if not args.browser_only:
+        if args.flinc_root is None:
+            parser.error('--flinc-root is required unless --browser-only is used.')
+        root = args.flinc_root.expanduser().resolve()
+        for name in ['install_kernels.py', 'handler.py', 'repeat-handler.py', 'kernel_process.py', 'kernel_bootstrap.py']:
+            if not (root / name).is_file():
+                parser.error(f'Missing FLINC integration source: {root / name}')
+        for command in ['sciunit', 'codex-acp', 'codex']:
+            if not shutil.which(command):
+                parser.error(f'Required command is not installed: {command}')
     if importlib.metadata.version('jupyterlab-commands-toolkit') != '0.2.0':
         parser.error('Browser compatibility patch supports commands-toolkit 0.2.0 only.')
-    kernel = KernelSpecManager().get_kernel_spec(args.kernel)
-    if 'ipykernel_launcher' not in kernel.argv:
-        parser.error('Choose an existing Python/IPython kernel.')
+    if not args.browser_only:
+        kernel = KernelSpecManager().get_kernel_spec(args.kernel)
+        if 'ipykernel_launcher' not in kernel.argv:
+            parser.error('Choose an existing Python/IPython kernel.')
     roots = [args.toolkit_root] if args.toolkit_root else [
         Path(p) / 'jupyterlab-commands-toolkit' for p in jupyter_path('labextensions')
     ]
     toolkit = next((p for p in roots if (p / 'package.json').is_file()), None)
     if toolkit is None:
         parser.error('Cannot find the browser extension; supply --toolkit-root.')
+    toolkit = toolkit.expanduser().resolve()
+    print(f'Python environment: {sys.executable}')
+    print(f'Browser extension: {toolkit}')
     from .browser_patch.apply_browser_patch import patch
     # Validate the exact prebuilt bundle before touching the installed extension.
     with tempfile.TemporaryDirectory(prefix='flinc-agent-check-') as temporary:
         staged = Path(temporary) / 'toolkit'
         shutil.copytree(toolkit, staged)
         patch(staged)
+        # Compare the active metadata/chunk/loader with the desired patch. This
+        # distinguishes installed repairs from mere patch compatibility.
+        changed = any(not (toolkit / p.relative_to(staged)).is_file() or
+                      p.read_bytes() != (toolkit / p.relative_to(staged)).read_bytes()
+                      for p in staged.rglob('*') if p.is_file())
+    print('Browser repair status: ' + ('NEEDS REPAIR' if changed else 'CURRENT'))
     if args.check:
-        print('Prerequisites and browser patch compatibility checked. No files changed.')
+        print('Patch compatibility checked. No files changed; --check does not apply the repair.')
+        print('This checks files on disk, not a live browser command round trip.')
         return
     backups = Path.home() / '.local/state/flinc-agent/backups'
     backups.mkdir(parents=True, exist_ok=True)
     backup = Path(tempfile.mkdtemp(prefix='setup-', dir=backups))
     shutil.copytree(toolkit, backup / 'commands-toolkit')
+    if args.browser_only:
+        patch(toolkit)
+        print(f'Browser repair applied. Backups: {backup}')
+        print('Restart Jupyter and reload JupyterLab. Create a fresh Flinc Agent chat.')
+        return
     config = Path(jupyter_config_dir()) / 'jupyter_server_config.d/flinc.json'
     config.parent.mkdir(parents=True, exist_ok=True)
     data = json.loads(config.read_text()) if config.exists() else {}

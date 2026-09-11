@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flinc-agent"
-version = "0.1.1"
+version = "0.1.2"
 description = "Source-grounded FLINC Audit and Repeat agent for JupyterLab"
 requires-python = ">=3.10"
 license = "GPL-3.0-or-later"
