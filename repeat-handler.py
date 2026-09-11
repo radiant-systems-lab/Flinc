@@ -1,30 +1,20 @@
 #!/usr/bin/env python
-import signal
+"""Launch Repeat with normal interrupts and accurate exit status."""
 import os
-import psutil
+import re
 import sys
-import subprocess
+from kernel_process import run
 
-def sigIntHandler(*_):
-    print("Inside sigIntHandler")
-    parent = psutil.Process(os.getpid())
-    print("parent:", parent.exe())
-    for child in parent.children(recursive=True):
-        print("child:", child.exe())
-        child.send_signal(signal.SIGKILL)
-
-def sigTermHandler(*_):
-    print("Inside sigTermHandler")
-    parent = psutil.Process(os.getpid())
-    print("parent:", parent.exe())
-    for child in parent.children(recursive=True):
-        print("child:", child.exe())
-        child.send_signal(signal.SIGKILL)
+def repeat_command(args, execution_id=None):
+    command = list(args)
+    if execution_id:
+        if not re.fullmatch(r'e[1-9][0-9]*', execution_id):
+            raise ValueError('FLINC_REPEAT_EXECUTION must have the form e1, e2, ...')
+        command[command.index('repeat') + 1] = execution_id
+    if 'ipykernel_launcher' in command:
+        command.append('--HistoryManager.hist_file=:memory:')
+    return command
 
 
-print("Repeat Kernel")
-sys.stdout = open('flinc.log', 'a')
-sys.stderr = open('flinc.log', 'a')
-signal.signal(signal.SIGINT, sigIntHandler)
-signal.signal(signal.SIGTERM, sigTermHandler)
-subprocess.run(sys.argv[1:])
+if __name__ == '__main__':
+    sys.exit(run(repeat_command(sys.argv[1:], os.environ.get('FLINC_REPEAT_EXECUTION'))))

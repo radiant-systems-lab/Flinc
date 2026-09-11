@@ -1,0 +1,20 @@
+{
+  "audit_code_cells": 2,
+  "repeat_code_cells": 2,
+  "source_unchanged": true,
+  "outputs_match": true,
+  "actual_mcp_tools": true,
+  "http_browser": true,
+  "execution": "e3",
+  "no_unintended_audit": true,
+  "repeat_record": "e4",
+  "natural_language_chat_tested": false,
+  "agent_version": "0.1.1",
+  "regression_tests_passed": 16,
+  "main_jupyter_restart_required": true,
+  "installer_preserves_captures_and_selection": true,
+  "original_imerg_source_restored": true,
+  "ecs_patch_removed": true,
+  "declared_dependencies_satisfied": true,
+  "validation_server_shutdown": true
+}

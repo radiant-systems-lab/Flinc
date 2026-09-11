@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flinc-agent"
+version = "0.1.1"
+description = "Source-grounded FLINC Audit and Repeat agent for JupyterLab"
+requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+dependencies = [
+  "jupyterlab>=4,<5",
+  "ipykernel>=6,<8",
+  "jupyter-client>=8,<9",
+  "jupyter-ai==3.2.0",
+  "jupyter-ai-acp-client==0.3.0",
+  "jupyter-ai-tools==0.7.0",
+  "jupyter-server-mcp==0.3.0",
+  "jupyterlab-commands-toolkit==0.2.0",
+  "psutil>=5.9,<8",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10"]
+
+[project.scripts]
+flinc-agent = "flinc_agent.cli:main"
+flinc-agent-setup = "flinc_agent.setup:main"
+
+[project.entry-points."jupyter_ai.personas"]
+flinc-agent = "flinc_agent.persona:FlincAgentPersona"
+
+[project.entry-points."jupyter_server_mcp.tools"]
+flinc-agent = "flinc_agent.tools:MCP_TOOL_SPECS"
+
+[tool.setuptools.packages.find]
+include = ["flinc_agent*"]
+
+[tool.setuptools.package-data]
+"flinc_agent.browser_patch" = ["*.js", "*.ts"]

@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+build/
+dist/
+.ipynb_checkpoints/
+.env
+.env.*
+!.env.example
+*.log
+/audit-kernel/
+/sciunit/
+cde-package/
+deployment-backups/

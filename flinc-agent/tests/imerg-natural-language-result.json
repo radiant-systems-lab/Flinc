@@ -1,0 +1,19 @@
+{
+  "natural_language_agent_test": true,
+  "notebook": "IMERG/Dask (unchanged source copy)",
+  "audit_execution": "e1",
+  "successful_repeat_record": "e3",
+  "repeat_attempts": 2,
+  "first_repeat_failure": "AWS container-image pull network timeout; Worker failed to start",
+  "audit_code_cells_completed": 7,
+  "repeat_code_cells_completed": 7,
+  "source_unchanged": true,
+  "matching_sha256_output_files": 14,
+  "test_aws_tasks_stopped": 15,
+  "active_test_aws_tasks": 0,
+  "remaining_test_kernels": 0,
+  "dask_library_unmodified": true,
+  "generic_agent_fix": "Resolve the actual MCP endpoint for this Jupyter process when using a dynamic port",
+  "regression_tests_passed": 17,
+  "main_jupyter_restart_required": true
+}

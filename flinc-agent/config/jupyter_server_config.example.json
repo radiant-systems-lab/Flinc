@@ -1,0 +1,5 @@
+{
+  "KernelManager": {
+    "shutdown_wait_time": 120.0
+  }
+}

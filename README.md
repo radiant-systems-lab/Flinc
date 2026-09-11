@@ -1,5 +1,9 @@
 # Prerequisites
 
+For the generic JupyterLab Flinc Agent, installation, compatibility, and the
+Audit/Repeat workflow, see [FLINC_AGENT_SETUP.md](FLINC_AGENT_SETUP.md).
+Agent source and packaging are in [flinc-agent/](flinc-agent/).
+
 For the AWS distributed replay changes on `FLINC-NASA-DEMO_SEP_26`, see
 [the branch README](README.FLINC-NASA-DEMO_SEP_26.md).
 
@@ -23,8 +27,8 @@ below.
    
    `<user kernel path>` is the path of the kernel that will execute your notebook code.
 
-4. The successful execution of the above script will result in the 
-installation of sciunit, audit kernel, and repeat kernel.
+4. The script registers the Audit and Repeat kernels. Sciunit must already be
+installed and working in the selected Linux environment.
    You may confirm the kernel installations by running:
    
    `jupyter kernelspec list`
@@ -49,9 +53,8 @@ view using:
    It will create a file named `e1-requirements.txt` in the notebook location to list all the dependencies.
 
 **NOTES**
-1. The install.sh script must only be executed once.
-   Once the audit and repeat kernels have been installed, the script 
-should not be run again.
+1. The installer can be rerun. It preserves existing captures and the installed
+   Repeat execution selection. Use the original Python kernelspec as input.
 2. No existing file should be deleted or modified in the Flinc directory.
 3. Run one notebook in a Sciunit project with the audit and repeat kernels. If you have multiple notebooks to audit, create separate Sciunit projects for each notebook.
 4. If you run your code using the audit kernel on machine #1, you can repeat it using the repeat kernel on machine #2. To do this, first execute your code using audit kernel, and then run 'sciunit copy' to obtain a unique code. Take that code and run `sciunit open <code>`. This transfers the contents of the notebook container to machine #2 from machine #1.
