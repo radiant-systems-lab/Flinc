@@ -40,6 +40,8 @@ flinc-agent-setup --flinc-root "$PWD" --kernel python3
 `sciunit`, `codex`, and `codex-acp` on PATH. Install/authenticate those using your
 deployment's normal process; setup does not log in or copy credentials. The
 current persona uses the Codex ACP adapter. Each user supplies their own login.
+See [Codex ACP and authentication](FLINC_AGENT_CODEX_LOGIN.md) for installation,
+remote-server login, API-key authentication, and troubleshooting details.
 
 Run setup as the Jupyter user, in its Python environment, with permission to
 update the installed browser extension. It detects extension and config paths

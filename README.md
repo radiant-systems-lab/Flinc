@@ -3,6 +3,8 @@
 For the generic JupyterLab Flinc Agent, installation, compatibility, and the
 Audit/Repeat workflow, see [FLINC_AGENT_SETUP.md](FLINC_AGENT_SETUP.md).
 Agent source and packaging are in [flinc-agent/](flinc-agent/).
+For the Codex backend and agent authentication, see
+[FLINC_AGENT_CODEX_LOGIN.md](FLINC_AGENT_CODEX_LOGIN.md).
 
 For the AWS distributed replay changes on `FLINC-NASA-DEMO_SEP_26`, see
 [the branch README](README.FLINC-NASA-DEMO_SEP_26.md).
