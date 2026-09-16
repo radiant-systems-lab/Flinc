@@ -89,7 +89,7 @@ class FlincAgentPersona(CodexAcpPersona):
     def defaults(self) -> PersonaDefaults:
         parent_defaults = super().defaults
         return PersonaDefaults(
-            name="flinc-agent",
+            name="NB Agent",
             avatar_path=parent_defaults.avatar_path,
             description="Installs, operates, and diagnoses FLINC and Sciunit in Jupyter.",
             system_prompt="unused",

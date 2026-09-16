@@ -14,6 +14,7 @@ from .notebook import (
     flinc_shutdown_notebook, flinc_select_repeat_execution,
 )
 from .source import read_source_file, search_source
+from .sharing import create_share_link
 
 
 def flinc_status(
@@ -90,6 +91,13 @@ def flinc_install(
     return install_flinc(kernel_name, repository, revision, source_path, confirm)
 
 
+def flinc_create_share_link(
+    additional_sciunit_roots: list[str] | None = None,
+) -> dict[str, object]:
+    """Create a CloudFront share link for the active committed Sciunit project."""
+    return create_share_link(additional_sciunit_roots)
+
+
 FLINC_TOOLS = [
     flinc_status,
     flinc_run_notebook,
@@ -103,6 +111,7 @@ FLINC_TOOLS = [
     flinc_read_source,
     flinc_install_plan,
     flinc_install,
+    flinc_create_share_link,
 ]
 
 MCP_TOOL_SPECS = [f"flinc_agent.tools:{tool.__name__}" for tool in FLINC_TOOLS]

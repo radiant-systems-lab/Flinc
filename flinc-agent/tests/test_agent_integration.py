@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock
 import sys
 import subprocess
 import signal
+from subprocess import CompletedProcess
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -178,3 +179,43 @@ def test_persona_resolves_dynamic_mcp_port_and_preserves_identity(monkeypatch, t
     assert updated.mcp_servers[0].headers==original.mcp_servers[0].headers
     assert updated.mcp_servers[1]==original.mcp_servers[1]
     assert original.mcp_servers[0].url=='http://localhost:0/mcp'
+
+
+def test_persona_is_named_nb_agent():
+    from traitlets.config import Configurable
+    from flinc_agent.persona import FlincAgentPersona
+    persona = FlincAgentPersona.__new__(FlincAgentPersona)
+    Configurable.__init__(persona)
+    assert persona.defaults.name == 'NB Agent'
+
+
+def test_create_share_link_uses_active_committed_project(monkeypatch, tmp_path):
+    from flinc_agent import sharing
+    monkeypatch.setattr(sharing, 'resolve_project', lambda *_: tmp_path)
+    monkeypatch.setattr(sharing, 'inspect_project', lambda _: {
+        'execution_ids': ['e1'],
+    })
+    monkeypatch.setattr(sharing.shutil, 'which', lambda _: '/usr/bin/sciunit')
+    run = lambda *args, **kwargs: CompletedProcess(
+        args[0], 0, 'https://example.cloudfront.net/project.zip\n', ''
+    )
+    monkeypatch.setattr(sharing.subprocess, 'run', run)
+
+    result = sharing.create_share_link()
+
+    assert result == {
+        'success': True,
+        'project': str(tmp_path),
+        'execution_ids': ['e1'],
+        'share_url': 'https://example.cloudfront.net/project.zip',
+    }
+
+
+def test_create_share_link_requires_committed_execution(monkeypatch, tmp_path):
+    from flinc_agent import sharing
+    monkeypatch.setattr(sharing, 'resolve_project', lambda *_: tmp_path)
+    monkeypatch.setattr(sharing, 'inspect_project', lambda _: {
+        'execution_ids': [],
+    })
+    with pytest.raises(RuntimeError, match='no committed execution'):
+        sharing.create_share_link()

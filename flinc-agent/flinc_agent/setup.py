@@ -11,6 +11,8 @@ import tempfile
 from jupyter_core.paths import jupyter_config_dir, jupyter_path
 from jupyter_client.kernelspec import KernelSpecManager
 
+from .persona_visibility import NB_AGENT_PERSONA_ID, restrict_to_nb_agent
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -22,11 +24,13 @@ def main():
     parser.add_argument('--check', action='store_true', help='Check prerequisites without changing files')
     parser.add_argument('--initial-agent-mode', choices=['read-only', 'agent', 'agent-full-access'],
                         help='Explicit deployment choice; omitted preserves existing mode')
+    parser.add_argument('--only-nb-agent', action='store_true',
+                        help='Expose only NB Agent in Jupyter chat and make it the default')
     args = parser.parse_args()
     if sys.platform != 'linux':
         parser.error('FLINC Audit/Repeat currently requires Linux.')
-    if args.browser_only and args.initial_agent_mode:
-        parser.error('--initial-agent-mode cannot be used with --browser-only.')
+    if args.browser_only and (args.initial_agent_mode or args.only_nb_agent):
+        parser.error('--initial-agent-mode and --only-nb-agent cannot be used with --browser-only.')
     if not args.browser_only:
         if args.flinc_root is None:
             parser.error('--flinc-root is required unless --browser-only is used.')
@@ -85,6 +89,11 @@ def main():
     data.setdefault('KernelManager', {}).setdefault('shutdown_wait_time', 120.0)
     if args.initial_agent_mode:
         data.setdefault('FlincAgentPersona', {})['initial_agent_mode'] = args.initial_agent_mode
+    if args.only_nb_agent:
+        removed = restrict_to_nb_agent(backup)
+        data.setdefault('PersonaManager', {})['default_persona_id'] = NB_AGENT_PERSONA_ID
+        print('Hidden Jupyter chat personas: ' + (', '.join(removed) if removed else 'none'))
+        print('Default Jupyter chat persona: NB Agent')
     subprocess.run([sys.executable, str(root / 'install_kernels.py'), kernel.resource_dir], check=True)
     patch(toolkit)
     config.write_text(json.dumps(data, indent=2) + '\n')
