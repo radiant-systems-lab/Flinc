@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 if (( $# != 1 ))
 then
@@ -6,9 +7,47 @@ then
   exit 1
 fi
 
-# step 1: install sciunit from the given executable
+# --- config for the on-the-fly sciunit build -------------------------------
+SCIUNIT_REPO_URL="https://github.com/radiant-systems-lab/sciunit.git"
+SCIUNIT_REF="master"
+PATCH_DIR="$(pwd)/patches"
+PATCH_FILES=(
+  "${PATCH_DIR}/flinc-sigint.patch"
+)
+
+if ! command -v git &> /dev/null
+then
+    apt-get update
+    apt-get install -y git
+fi
+
+# step 1: download sciunit from upstream, apply FLINC's patches, build 
+# and install it from source
 pip install cmake
-pip install sciunit2-0.4.post117.dev203853284.tar.gz
+
+BUILD_DIR="$(mktemp -d)"
+trap 'rm -rf "${BUILD_DIR}"' EXIT
+
+git clone --depth 1 --branch "${SCIUNIT_REF}" "${SCIUNIT_REPO_URL}" "${BUILD_DIR}/sciunit"
+
+pushd "${BUILD_DIR}/sciunit" > /dev/null
+
+for patch_file in "${PATCH_FILES[@]}"
+do
+  if ! git apply --check "${patch_file}" 2> /dev/null
+  then
+    echo "ERROR: ${patch_file} no longer applies cleanly to" >&2
+    echo "       ${SCIUNIT_REPO_URL}@${SCIUNIT_REF}." >&2
+    echo "       Upstream likely changed the patched file -- update the patch by hand and retry." >&2
+    exit 1
+  fi
+  git apply "${patch_file}"
+done
+
+pip install .
+
+popd > /dev/null
+
 sciunit create -f audit-kernel
 
 # step 2: copy kernel.json file of user kernel

@@ -1,0 +1,16 @@
+diff --git a/sciunit2/command/exec_/__init__.py b/sciunit2/command/exec_/__init__.py
+index 0000000..0000000 100644
+--- a/sciunit2/command/exec_/__init__.py	2026-09-18 15:03:19.608399749 +0000
++++ b/sciunit2/command/exec_/__init__.py	2026-09-18 15:03:19.634379678 +0000
+@@ -9,6 +9,11 @@
+ from getopt import getopt
+ from importlib.resources import files
+ 
++# for FLINC, to avoid SIGINT causing KeyboardInterruptException
++# and exiting sciunit execution
++import signal
++signal.signal(signal.SIGINT, lambda *_: None)
++
+ 
+ class ExecCommand(CommitMixin, AbstractCommand):
+     name = 'exec'
